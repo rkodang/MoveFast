@@ -1,0 +1,199 @@
+<div class="row">
+	<div class="col-xs-12">
+		<div class="box">
+			<div class="box-header">
+				<h3 class="box-title">日志管理呈现页面</h3>
+
+				<div class="box-tools">
+					<div class="input-group input-group-sm" style="width: 350px;">
+						<input type="text" name="table_search" id="searchNameId"
+							class="form-control pull-right" placeholder="GunDom-UserName">
+
+						<div class="input-group-btn">
+							<button type="button" class="btn btn-default btn-search">
+                                <i class="fa fa-search"></i>
+							</button>
+							<button type="button" class="btn btn-default btn-delete">GunDom-Delete</button>
+						</div>
+					</div>
+				</div>
+			</div>
+			<!-- /.box-header -->
+			<div class="box-body table-responsive no-padding">
+				<table class="table table-hover">
+					<thead>
+						<tr>
+						    <th><input type="checkbox" id="checkAll">GD全选</th>
+							<th>GD用户名</th>
+							<th>GD操作</th>
+							<th>GD请求方法</th>
+							<th>GD请求参数</th>
+							<th>GD-IP</th>
+							<th>GD执行时长</th>
+						</tr>
+					</thead>
+					<tbody id="tbodyId">
+					    <tr>
+					       <td colspan="7">GD-数据正在加载中...</td>
+					    </tr>
+					</tbody>
+				</table>
+			</div>
+			<div id="pageId" class="box-footer clearfix">
+			      
+			</div>
+			<!-- /.box-body -->
+		</div>
+		<!-- /.box -->
+	</div>
+</div>
+<script type="text/javascript">
+	//补充js
+	$(function(){
+		$("#pageId").load("doPageUI",doGetObjects);
+		$(".input-group-btn").on("click",".btn-search",doQueryObjects);//用户名查询
+		$(".input-group-btn").on("click",".btn-delete",doDeleteObjects);
+		$("#checkAll").change(doChangeTBodyCheckBoxState);
+		$("#tbodyId").on("change",".cBox",doCheckTHeadCheckBoxState);
+	});
+	function doQueryObjects() {
+		//初始化页码值
+		$("#pageId").data("pageCurrent",1);
+		doGetObjects();
+	}
+	function doGetObjects() {
+		$("#checkAll").prop("checked",false);
+		//1.定义请求的url
+		var pageCurrent = $("#pageId").data("pageCurrent");
+		if (!pageCurrent){pageCurrent=1} ;
+
+		var username = $("#searchNameId").val();
+		var params={"pageCurrent":pageCurrent};
+		if(username){
+			params.username=username;
+		}
+		// console.log(params);
+		//2.定义请求的url
+		var url="log/doFindPageObjects";
+		//3.发送异步请求
+		$.get(url,params,function(result){
+			doHandleResponseResult(result);
+		},"json")
+
+		
+	}
+
+	//处理响应的结果
+	function doHandleResponseResult(result) {
+			if(result.state==1){
+				//将信息展示
+				doSetTableBodyRows(result.data.records);
+				//在common/page.html定义方法
+				doSetPagination(result.data);
+			}else{
+				//  <td colspan="7">GD-数据正在加载中...</td>
+				var tBody=$("#tbodyId");
+				tBody.empty();
+				var tr=$("<tr></tr>");
+				var td=$(  "<td colspan='7'>"+"<h3>"+result.message+"</h3>"+"</td>")
+				tr.append(td);
+				tBody.append(tr);
+				alert(result.message);
+			}
+		};
+	//拼接table对象并展示数据
+	function doSetTableBodyRows(records){
+		var tBody = $("#tbodyId");
+		tBody.empty();
+		for (var i=0;i<records.length;i++){
+			var tr=$("<tr></tr>");
+			var tds=doCreateTds(records[i]);
+			tr.append(tds);
+			tBody.append(tr);
+		}
+
+	}
+
+	function doCreateTds(data){
+		var tds="<td><input type='checkbox' class='cBox' name='cItem' value='"+data.id+"'></td>"+
+				"<td>"+data.username+"</td>"+
+				"<td>"+data.operation+"</td>"+
+				"<td>"+data.method+"</td>"+
+				"<td>"+data.params+"</td>"+
+				"<td>"+data.ip+"</td>"+
+				"<td>"+data.time+"</td>";
+		return tds;
+	}
+
+	function doDeleteObjects(){
+		var ids=doGetCheckedId();
+		//判断是否有id值
+		if(ids.length==0){
+			alert("至少选择一个吧");
+			return;
+		}
+		var confirmed = confirm("确定真的要删除吗");
+		if (!confirmed){
+			return;//不是真的要删除就返回
+		}
+		var url="log/doDeleteObjects";
+		var params={"ids":ids.toString()};
+		console.log(params);
+		$.post(url,params,function (result) {
+			if(result.state==1){
+				alert(result.message);
+				doRefreshPages();
+			}else{
+				alert(result.message);
+			}
+		});
+	}
+	
+	function doRefreshPages() {
+		//最后一页要往前跳一页
+		var pageCurrent = $("#pageId").data("pageCurrent");
+		var pageCount=$("#pageId").data("pageCount");
+		var checked = $("#checkAll").prop("checked");
+		if(pageCount==pageCount&&pageCurrent>1&&checked){
+			pageCurrent--;
+			$("#pageId").data("pageCurrent",pageCurrent);
+		}
+
+		doGetObjects();
+	}
+	
+	
+	function doGetCheckedId() {
+		var array=[];//存储被选中的ID
+		$("#tbodyId input[type=checkbox]").each(function () {
+			//遍历所有选框,是否有选中
+			var checked = $(this).prop("checked");
+			if(checked){
+				//选中则为ture,ture就把值放到数组中
+				array.push($(this).val());
+			}
+		});
+		return array;
+	}
+	function doChangeTBodyCheckBoxState(){
+		var flag=$(this).prop("checked");
+		$("#tbodyId input[type='checkbox']").each(function () {
+			$(this).prop("checked",flag);
+		})
+	}
+	
+	function doCheckTHeadCheckBoxState() {
+		//获取tbody中所有checkbox对象状态的结果
+		var flag=true;
+		$("#tbodyId input[type='checkbox']").each(function () {
+			flag=flag&$(this).prop("checked");
+		})
+		$("#checkAll").prop("checked",flag);
+	}
+</script>
+
+
+
+
+
+

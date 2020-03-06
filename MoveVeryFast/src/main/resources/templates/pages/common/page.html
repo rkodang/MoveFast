@@ -1,0 +1,62 @@
+<ul class="pagination pagination-sm no-margin pull-right">
+    <li><a class="first">GD首页</a></li>
+	<li><a class="pre">GD上一页</a></li>
+	<li><a class="next">GD下一页</a></li>
+	<li><a class="last">GD尾页</a></li>
+	<li><a class="rowCount">GD总记录数(0)</a></li>
+	<li><a class="pageCount">GD总页数(0)</a></li>
+	<li><a class="pageCurrent">GD当前页(1)</a></li>
+</ul>
+<script type="text/javascript">
+  //补充js
+  	$(function () {
+  		//实现跳转的业务逻辑
+		$("#pageId").on("click",".first,.pre,.next,.last",doJumpToPage);
+	});
+
+	function doJumpToPage() {
+		var cls = $(this).prop("class");
+		// console.log("class",cls);
+		//获取当前页码值
+		var pageCurrent=$("#pageId").data("pageCurrent");
+		var pageCount=$("#pageId").data("pageCount");
+		//修改当前页码值
+		if(cls=="first"){
+			pageCurrent=1;
+		}else if (cls=="pre"&&pageCurrent>1){
+			pageCurrent--;
+		}else if(cls=="next"&&pageCurrent<pageCount){
+			pageCurrent++;
+		}else if(cls=="last"){
+			pageCurrent=pageCount;
+		}else {
+			return;
+		}
+		//基于新的页码值重新查询
+		$("#pageId").data("pageCurrent",pageCurrent);
+		$("#pageId").data("pageCount",pageCount);
+
+		doGetObjects();
+
+	}
+	function doSetPagination(pageObject) {
+		//1.总记录数
+		$(".rowCount").html("GD总记录数("+pageObject.rowCount+")");
+		//2.总页数
+		$(".pageCount").html("GD总页数("+pageObject.pageCount+")");
+		//3.当前页码
+		$(".pageCurrent").html("GD当前页("+pageObject.pageCurrent+")");
+
+		//存放数据
+		$("#pageId").data("pageCurrent",pageObject.pageCurrent);
+		$("#pageId").data("pageCount",pageObject.pageCount);
+
+	}
+
+</script>
+
+
+
+
+
+
