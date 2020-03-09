@@ -38,6 +38,13 @@ public class SpringAsyncConfig implements AsyncConfigurer {
         pool.setKeepAliveSeconds(keepAliveTime);
         pool.setQueueCapacity(queueCapacity);
         pool.setThreadFactory(threadFactory);
+        //设置拒绝执行的处理
+        pool.setRejectedExecutionHandler(new RejectedExecutionHandler() {
+            @Override
+            public void rejectedExecution(Runnable r, ThreadPoolExecutor executor) {
+                System.out.println("队列已满,拒绝执行");
+            }
+        });
         pool.initialize();
 
         return pool;
