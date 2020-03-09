@@ -77,7 +77,7 @@ public class SysLogServiceImpl implements  SysLogService {
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    @Async//异步方式-->ThreadPoolTaskExecutor
+    @Async("asyncThreadPool")//异步方式-->ThreadPoolTaskExecutor
     @Override
     public void saveObject(SysLog entity) {
         sysLogDao.insertObject(entity);
