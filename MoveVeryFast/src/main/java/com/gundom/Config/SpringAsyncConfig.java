@@ -2,15 +2,14 @@ package com.gundom.Config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.scheduling.annotation.AsyncConfigurer;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
-import java.util.concurrent.LinkedBlockingDeque;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 @Configuration
-public class SpringAsyncConfig {
+public class SpringAsyncConfig implements AsyncConfigurer {
     private int corePoolSize=10;
     private int maximumPoolSize=20;
     private int keepAliveTime=30;
@@ -27,6 +26,19 @@ public class SpringAsyncConfig {
     public ThreadPoolExecutor newThreadPoolExecutor(){
         ThreadPoolExecutor pool=new ThreadPoolExecutor(corePoolSize,maximumPoolSize,keepAliveTime,
                 TimeUnit.SECONDS,new LinkedBlockingDeque<>(queueCapacity),threadFactory);
+
+        return pool;
+    }
+
+    @Override
+    public Executor getAsyncExecutor() {
+        ThreadPoolTaskExecutor pool=new ThreadPoolTaskExecutor();
+        pool.setCorePoolSize(corePoolSize);
+        pool.setMaxPoolSize(maximumPoolSize);
+        pool.setKeepAliveSeconds(keepAliveTime);
+        pool.setQueueCapacity(queueCapacity);
+        pool.setThreadFactory(threadFactory);
+        pool.initialize();
 
         return pool;
     }
